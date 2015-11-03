@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+	"icons" : {
+    "19" : "mht19_g.png",
+	"48" : "mht48_g.png"
+  },
+
+   "content_scripts": [ {
+      "exclude_globs": [  ],
+      "exclude_matches": [  ],
+      "include_globs": [ "http://*/puzzleimage.php*", "https://*/puzzleimage.php*", "http://*.dropbox.com/*", "https://*.dropbox.com/*" ],
+      "js": ["KR_Solver.user.js"],
+      "matches": [ "http://*/*", "https://*/*" ],
+      "run_at": "document_idle"
+   } ],
+
+	"permissions": [
+		"notifications"
+	],
+
+   "converted_from_user_script": true,
+   "description": "This is an auto MH KR Solver. PRECAUTION: Use this script at your own risk as this is against the rule of Mousehunt.",
+   "name": "KR Auto Solver",
+   "version": "1.0.0"
+}
