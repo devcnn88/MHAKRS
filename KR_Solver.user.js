@@ -10,41 +10,30 @@
 // @include		https://*.dropbox.com/*
 // ==/UserScript==
 
-function receiveMessage(event)
-{  
-	console.debug("Event origin: " + event.origin);
-	console.debug("Event data: " + event.data);
-	if (event.origin.indexOf("mousehunt") > -1)
-	{
-		try
-		{
-			event.source.postMessage(KingsRewardSolver(), event.origin);	
-		}
-		catch (e)
-		{
-			console.debug("Error postMessage: " + e.message);
-			event.source.postMessage("", event.origin);	
-		}
-	}		
-}
-window.addEventListener("message", receiveMessage, false);
 var ocrDelayMin = 1;
 var ocrDelayMax = 3;
 var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayMin));
 window.setTimeout(function () { run(); }, ocrDelay * 1000);
 
 function run()
-{		
+{	
 	var krResult = KingsRewardSolver();
 	console.log(krResult);
 	try
-	{		
-		window.parent.postMessage(krResult, "https://www.mousehuntgame.com/");
+	{
+		// The ID of the extension we want to talk to.
+		var extIDMHAutobot = "pdokakieepmeklemmnmfgjhehcbdnnod";
+
+		// Make a simple request:
+		chrome.runtime.sendMessage(extIDMHAutobot, {result: krResult}, function(response) {			
+			if (response.close)
+				self.close();
+		});
 	}
 	catch (e)
 	{
-		console.debug("Error run(): " + e.message);		
-	}	
+		console.debug("Error run(): " + e.message);				
+	}
 }
 
 function KingsRewardSolver()
