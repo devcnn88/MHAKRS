@@ -8,6 +8,8 @@
 // @include		https://*/puzzleimage.php*
 // @include		http://*.dropbox.com/*
 // @include		https://*.dropbox.com/*
+// @include		http://*.dropboxusercontent.com/*
+// @include		https://*.dropboxusercontent.com/*
 // ==/UserScript==
 
 function receiveMessage(event)
@@ -34,7 +36,7 @@ var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayM
 window.setTimeout(function () { run(); }, ocrDelay * 1000);
 
 function run()
-{		
+{
 	var krResult = KingsRewardSolver();
 	console.log(krResult);
 	try

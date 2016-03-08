@@ -8,7 +8,7 @@
    "content_scripts": [ {
       "exclude_globs": [  ],
       "exclude_matches": [  ],
-      "include_globs": [ "http://*/puzzleimage.php*", "https://*/puzzleimage.php*", "http://*.dropbox.com/*", "https://*.dropbox.com/*" ],
+      "include_globs": [ "http://*/puzzleimage.php*", "https://*/puzzleimage.php*", "http://*.dropbox.com/*", "https://*.dropbox.com/*", "http://*.dropboxusercontent.com/*", "https://*.dropboxusercontent.com/*" ],
       "js": ["KR_Solver.user.js"],
       "matches": [ "http://*/*", "https://*/*" ],
       "run_at": "document_idle"
