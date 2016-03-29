@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name        MH Auto KR Solver
 // @author      Kevin Kwok, CnN
-// @version    	1.0.0
+// @version    	1.1.0
 // @namespace   https://devcnn.wordpress.com/, https://antimatter15.com/
 // @description This is an auto MH KR Solver.
+// @require		https://code.jquery.com/jquery-2.2.2.min.js
 // @include		http://*/puzzleimage.php*
 // @include		https://*/puzzleimage.php*
 // @include		http://*.dropbox.com/*
@@ -33,11 +34,13 @@ window.addEventListener("message", receiveMessage, false);
 var ocrDelayMin = 1;
 var ocrDelayMax = 3;
 var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayMin));
-window.setTimeout(function () { run(); }, ocrDelay * 1000);
+var krResult = "";
+var krImgData = "";
+window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
 
 function run()
 {
-	var krResult = KingsRewardSolver();
+	krResult = KingsRewardSolver();
 	console.log(krResult);
 	try
 	{		
@@ -269,9 +272,36 @@ function KingsRewardSolver()
 	resultOpening2 = FilterResult(resultOpening2);
 	
 	var resultFinalList = [resultClosing1, resultClosing2, resultOpening1, resultOpening2];
-	var resultFinal = CheckResult(resultFinalList);
+	//var resultFinal = CheckResult(resultFinalList);
+	krResult = CheckResult(resultFinalList);
+	
+	krImgData = CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
+	krImgData = krImgData.substring(krImgData.indexOf(",")+1, krImgData.length);
+	$.ajax({
+		url: "https://api.imgur.com/3/upload",
+		type: "POST",
+		datatype: "json",
+		data: {image: krImgData},
+		success: imgurCallback,
+		error: imgurCallback,
+		beforeSend: function (xhr) {
+			xhr.setRequestHeader("Authorization", "Client-ID ee139f96e441fd1");
+		}
+	});
     
-	return resultFinal + "~" + CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
+	//return resultFinal + "~" + CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
+}
+
+function imgurCallback(data){
+	console.debug(data);
+	var strSend = (data.success == true) ? krResult + "~" + data.data.link : krResult + "~" + krImgData;
+	console.debug(strSend);
+	try {
+		window.parent.postMessage(strSend, "https://www.mousehuntgame.com/");
+	}
+	catch (e) {
+		console.debug("Error imgurCallback(data): " + e.message);		
+	}
 }
 
 function FilterResult(result)
