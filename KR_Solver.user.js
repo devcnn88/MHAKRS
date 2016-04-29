@@ -237,7 +237,7 @@ function KingsRewardSolver()
 		datatype: "json",
 		data: {image: krImgData},
 		success: imgurCallback,
-		error: useOCRAD,
+		error: imgurCallback,
 		beforeSend: function (xhr) {
 			xhr.setRequestHeader("Authorization", "Client-ID ee139f96e441fd1");
 		}
@@ -309,7 +309,6 @@ function useOCRAD(){
 
 function imgurCallback(data){
 	console.debug(data);
-	
 	if(data.success == true){
 		imgurLink = data.data.link;
 		postIDOL(data.data.link);
