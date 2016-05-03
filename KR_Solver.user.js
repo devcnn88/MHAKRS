@@ -31,11 +31,12 @@ function receiveMessage(event)
 	}		
 }
 window.addEventListener("message", receiveMessage, false);
+var imgurKey = "ee139f96e441fd1";
 var apikey = "5eeaebcd-e0c6-40d6-9a6a-46ccaa66c28e";
 var postocrurl = "https://api.havenondemand.com/1/api/sync/ocrdocument/v1";
 var fd = new FormData();
 fd.append("apikey", apikey);
-fd.append("mode", "subtitle");
+fd.append("mode", "document_photo");
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
 var ocrDelayMax = 3;
@@ -43,6 +44,7 @@ var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayM
 var krResult = "";
 var krImgData = "";
 var krImgDataFull = "";
+var krImgDataPart = "";
 var imgurLink = "";
 var dilateImgData;
 var erodeImgData;
@@ -51,19 +53,8 @@ var dilateFinalImgData;
 var startRun = Date.parse(new Date());
 window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
 
-function run()
-{
+function run(){
 	KingsRewardSolver();
-	// krResult = KingsRewardSolver();
-	// console.log(krResult);
-	// try
-	// {
-		// window.parent.postMessage(krResult, "https://www.mousehuntgame.com/");
-	// }
-	// catch (e)
-	// {
-		// console.debug("Error run(): " + e.message);		
-	// }
 }
 
 function KingsRewardSolver()
@@ -230,7 +221,8 @@ function KingsRewardSolver()
     }
 	
 	krImgDataFull = CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
-	krImgData = krImgDataFull.substring(krImgDataFull.indexOf(",")+1, krImgDataFull.length);
+	krImgDataPart = CombineImageData([dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData]);
+	krImgData = krImgDataPart.substring(krImgDataPart.indexOf(",")+1, krImgDataPart.length);
 	$.ajax({
 		url: "https://api.imgur.com/3/upload",
 		type: "POST",
@@ -239,7 +231,7 @@ function KingsRewardSolver()
 		success: imgurCallback,
 		error: imgurCallback,
 		beforeSend: function (xhr) {
-			xhr.setRequestHeader("Authorization", "Client-ID ee139f96e441fd1");
+			xhr.setRequestHeader("Authorization", "Client-ID " + imgurKey);
 		}
 	});
 }
@@ -308,22 +300,22 @@ function useOCRAD(){
 }
 
 function imgurCallback(data){
-	console.debug(data);
 	if(data.success == true){
 		imgurLink = data.data.link;
-		postIDOL(data.data.link);
+		postIDOL(data.data.link, data.data.deletehash);
 	}
 	else{
+		console.debug(data);
 		returnResult("#" + JSON.stringify(data));
 		useOCRAD();
 	}
 }
 
-function postIDOL(link){
+function postIDOL(link, deletehash){
 	fd.append("url", link);
 	xhr.open('POST', postocrurl, true);	
     xhr.onreadystatechange = function(){
-        var r = fnReady();	
+        var r = fnReady(deletehash);	
     };
     xhr.onload = function(){ };
     
@@ -341,20 +333,36 @@ function returnResult(strSend){
 	}
 }
 
-function fnReady() {
+function fnReady(deletehash) {
 	if (xhr.readyState === 4){
-		console.debug(xhr);
 		if(xhr.status == 200){
 			var r = xhr.responseText;
 			var json = JSON.parse(r);
 			var text_block = json.text_block;
-			var resultList = [];
-			for(var i=0;i<text_block.length;i++){
-				resultList.push(FilterResult(text_block[i].text));
-			}
+			if(text_block.length > 0){
+				var resultList = [];
+				var temp = "";
+				for(var i=0;i<text_block.length;i++){
+					temp = text_block[i].text.split(" ");
+					for(var j=0;j<temp.length;j++){
+						resultList.push(FilterResult(temp[j]));
+					}
+				}
 
-			var strSend = CheckResult(resultList) + "~" + imgurLink;
-			returnResult(strSend);
+				$.ajax({
+					url: "https://api.imgur.com/3/image/" + deletehash,
+					type: "DELETE",
+					beforeSend: function (xhr) {
+						xhr.setRequestHeader("Authorization", "Client-ID " + imgurKey);
+					}
+				});
+				var strSend = CheckResult(resultList) + "~" + krImgDataFull;
+				returnResult(strSend);
+			}
+			else{
+				console.log("text_block.length: " + text_block.length);
+				useOCRAD();
+			}
 		}
 		else{
 			console.log("xhr.status: " + xhr.status);
@@ -362,10 +370,9 @@ function fnReady() {
 		}
 	}
 	else{
-		console.log("xhr.readyState: "+xhr.readyState);
-		
 		if(Date.parse(new Date()) - startRun > 15000){
-			// wait than 30 seconds
+			// wait more than 15 seconds
+			console.log("xhr.readyState: "+xhr.readyState);
 			useOCRAD();
 		}
 	}
@@ -385,13 +392,14 @@ function FilterResult(result)
 
 function CheckResult(resultList)
 {
-	var hit = [0, 0, 0, 0];
+	var hit = [];
 	var max = -1;
 	var maxIndex = 0;
 	var sum = 0;
 	var strDebug = "";
 	for (var i = 0; i < resultList.length; ++i)
 	{
+		hit[i] = 0;
 		for (var j = 0; j < resultList.length; ++j)
 		{
 			if (i != j)
@@ -439,6 +447,33 @@ function CombineAllImageData(ori, threshold, dilate, erode, erodeFinal, dilateFi
 	contextAll.drawImage(imgErode, ori.width, ori.height);	
 	contextAll.drawImage(imgErodeFinal, 0, ori.height * 2);
 	contextAll.drawImage(imgDilateFinal, ori.width, ori.height * 2);
+	return canvasAll.toDataURL('image/png');	
+}
+
+function CombineImageData(data){
+	if(data.length < 1)
+		return "";
+	
+	var canvasAll = document.createElement('canvas');
+	var maxWidth = 0;
+	var maxHeight = 0;
+	for(var i=0;i<data.length;i++){
+		if(data[i].width > maxWidth)
+			maxWidth = data[i].width;
+		if(data[i].height > maxHeight)
+			maxHeight = data[i].height;
+	}
+	
+	canvasAll.width = maxWidth * data.length;
+	canvasAll.height = maxHeight;
+	var contextAll = canvasAll.getContext('2d');
+	var img;
+	for(var i=0;i<data.length;i++){
+		img = new Image();
+		img.src = getBaseImage(data[i]);
+		contextAll.drawImage(img, i*maxWidth, 0);
+	}
+	
 	return canvasAll.toDataURL('image/png');	
 }
 
