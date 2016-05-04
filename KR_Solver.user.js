@@ -41,6 +41,7 @@ var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
 var ocrDelayMax = 3;
 var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayMin));
+var strSend = "";
 var krResult = "";
 var krImgData = "";
 var krImgDataFull = "";
@@ -295,8 +296,8 @@ function useOCRAD(){
 	
 	var resultFinalList = [resultClosing1, resultClosing2, resultOpening1, resultOpening2];
 	krResult = CheckResult(resultFinalList);
-	var strSend = krResult + "~" + krImgDataFull;
-	returnResult(strSend);
+	strSend = krResult + "~" + krImgDataFull;
+	returnResult();
 }
 
 function imgurCallback(data){
@@ -322,7 +323,7 @@ function postIDOL(link, deletehash){
 	xhr.send(fd); 
 }
 
-function returnResult(strSend){
+function returnResult(){
 	console.debug(strSend);
 	try {
 		window.parent.postMessage(strSend, "https://www.mousehuntgame.com/");
@@ -349,15 +350,16 @@ function fnReady(deletehash) {
 					}
 				}
 
+				strSend = CheckResult(resultList) + "~" + krImgDataFull;
 				$.ajax({
 					url: "https://api.imgur.com/3/image/" + deletehash,
 					type: "DELETE",
+					success: function(data){returnResult();},
+					error: function(data){returnResult();},
 					beforeSend: function (xhr) {
 						xhr.setRequestHeader("Authorization", "Client-ID " + imgurKey);
 					}
 				});
-				var strSend = CheckResult(resultList) + "~" + krImgDataFull;
-				returnResult(strSend);
 			}
 			else{
 				console.log("text_block.length: " + text_block.length);
