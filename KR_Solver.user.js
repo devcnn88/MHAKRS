@@ -39,7 +39,7 @@ fd.append("apikey", apikey);
 fd.append("mode", "document_photo");
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
-var ocrDelayMax = 3;
+var ocrDelayMax = 2;
 var ocrDelay = ocrDelayMin + Math.floor(Math.random() * (ocrDelayMax - ocrDelayMin));
 var strSend = "";
 var krResult = "";
@@ -175,7 +175,7 @@ function KingsRewardSolver()
 		    leftPixel = i - 4;
 		    rightPixel = i + 4;		
 		    isFirstCol = (leftPixel < 0);
-		    isLastCol = (rightPixel > erodeImgData.data.length);		
+		    isLastCol = (rightPixel > erodeImgData.data.length);
 		    if (isFirstCol)
 			    erodeFinalImgData.data[i] &= erodeImgData.data[rightPixel];
 		    else if (isLastCol)
@@ -344,10 +344,8 @@ function fnReady(deletehash) {
 				var resultList = [];
 				var temp = "";
 				for(var i=0;i<text_block.length;i++){
-					temp = text_block[i].text.split(" ");
-					for(var j=0;j<temp.length;j++){
-						resultList.push(FilterResult(temp[j]));
-					}
+					temp = text_block[i].text.split("\n");
+					resultList = resultList.concat(FilterResultIDOL(temp));
 				}
 
 				strSend = CheckResult(resultList) + "~" + krImgDataFull;
@@ -390,6 +388,25 @@ function FilterResult(result)
 		    newResult = newResult.concat(result.charAt(i));
     }
     return newResult.toLowerCase();
+}
+
+function FilterResultIDOL(result){
+	var regexp = /^[a-zA-Z0-9]+$/;
+    var newResult;
+	if(!Array.isArray(result))
+		result = [result];
+	
+	newResult = new Array(result.length);
+	for (var i = 0; i < result.length; ++i){
+		newResult[i] = "";
+		for (var j = 0; j < result[i].length; ++j){
+			if (result[i].charAt(j).search(regexp) != -1)
+				newResult[i] = newResult[i].concat(result[i].charAt(j));
+		}
+		newResult[i] = newResult[i].toLowerCase();
+	}
+
+    return newResult;
 }
 
 function CheckResult(resultList)
@@ -466,14 +483,14 @@ function CombineImageData(data){
 			maxHeight = data[i].height;
 	}
 	
-	canvasAll.width = maxWidth * data.length;
-	canvasAll.height = maxHeight;
+	canvasAll.width = maxWidth;
+	canvasAll.height = maxHeight * data.length;
 	var contextAll = canvasAll.getContext('2d');
 	var img;
 	for(var i=0;i<data.length;i++){
 		img = new Image();
 		img.src = getBaseImage(data[i]);
-		contextAll.drawImage(img, i*maxWidth, 0);
+		contextAll.drawImage(img, 0, i*maxHeight);
 	}
 	
 	return canvasAll.toDataURL('image/png');	
