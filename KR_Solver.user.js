@@ -31,12 +31,11 @@ function receiveMessage(event)
 	}		
 }
 window.addEventListener("message", receiveMessage, false);
-var imgurKey = "ee139f96e441fd1";
-var apikey = "5eeaebcd-e0c6-40d6-9a6a-46ccaa66c28e";
-var postocrurl = "https://api.havenondemand.com/1/api/sync/ocrdocument/v1";
+var apikey = "webocr3";
+var postocrurl = "https://apipropdf3.ocr.space/parse/image";
 var fd = new FormData();
 fd.append("apikey", apikey);
-fd.append("mode", "document_photo");
+fd.append("language", "cht");
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
 var ocrDelayMax = 2;
@@ -224,15 +223,43 @@ function KingsRewardSolver()
 	krImgDataFull = CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
 	krImgDataPart = CombineImageData([dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData]);
 	krImgData = krImgDataPart.substring(krImgDataPart.indexOf(",")+1, krImgDataPart.length);
+	
+	fd.append("file", dataURItoBlob(krImgDataPart), "ocr-file.png");
 	$.ajax({
-		url: "https://api.imgur.com/3/upload",
-		type: "POST",
-		datatype: "json",
-		data: {image: krImgData},
-		success: imgurCallback,
-		error: imgurCallback,
-		beforeSend: function (xhr) {
-			xhr.setRequestHeader("Authorization", "Client-ID " + imgurKey);
+		url: postocrurl,
+		data: fd,
+		dataType: 'json',
+		cache: false,
+		contentType: false,
+		processData: false,
+		type: 'POST',
+		timeout: 5000,
+		success: function (data) {
+			if(data.OCRExitCode == 1){
+				var resultList = [];
+				var temp = "";
+				var index = -1;
+				for(var i=0;i<data.ParsedResults.length;i++){
+					temp = data.ParsedResults[i].ParsedText.split("\r\n");
+					index = temp.indexOf("");
+					if(index > -1)
+						temp.splice(index, 1);
+
+					resultList = resultList.concat(FilterResultArray(temp));
+				}
+				
+				strSend = CheckResult(resultList) + "~" + krImgDataFull;
+				returnResult(strSend);
+			}
+			else{
+				console.log("data.OCRExitCode: " + data.OCRExitCode);
+				useOCRAD();
+			}
+		},
+		error: function (data) {
+			console.debug(data);
+			returnResult("#" + JSON.stringify(data));
+			useOCRAD();
 		}
 	});
 }
@@ -300,29 +327,6 @@ function useOCRAD(){
 	returnResult();
 }
 
-function imgurCallback(data){
-	if(data.success == true){
-		imgurLink = data.data.link;
-		postIDOL(data.data.link, data.data.deletehash);
-	}
-	else{
-		console.debug(data);
-		returnResult("#" + JSON.stringify(data));
-		useOCRAD();
-	}
-}
-
-function postIDOL(link, deletehash){
-	fd.append("url", link);
-	xhr.open('POST', postocrurl, true);	
-    xhr.onreadystatechange = function(){
-        var r = fnReady(deletehash);	
-    };
-    xhr.onload = function(){ };
-    
-	xhr.send(fd); 
-}
-
 function returnResult(){
 	console.debug(strSend);
 	try {
@@ -331,50 +335,6 @@ function returnResult(){
 	catch (e) {
 		console.log("Error returnResult(): ");
 		console.debug(e);
-	}
-}
-
-function fnReady(deletehash) {
-	if (xhr.readyState === 4){
-		if(xhr.status == 200){
-			var r = xhr.responseText;
-			var json = JSON.parse(r);
-			var text_block = json.text_block;
-			if(text_block.length > 0){
-				var resultList = [];
-				var temp = "";
-				for(var i=0;i<text_block.length;i++){
-					temp = text_block[i].text.split("\n");
-					resultList = resultList.concat(FilterResultIDOL(temp));
-				}
-
-				strSend = CheckResult(resultList) + "~" + krImgDataFull;
-				$.ajax({
-					url: "https://api.imgur.com/3/image/" + deletehash,
-					type: "DELETE",
-					success: function(data){returnResult();},
-					error: function(data){returnResult();},
-					beforeSend: function (xhr) {
-						xhr.setRequestHeader("Authorization", "Client-ID " + imgurKey);
-					}
-				});
-			}
-			else{
-				console.log("text_block.length: " + text_block.length);
-				useOCRAD();
-			}
-		}
-		else{
-			console.log("xhr.status: " + xhr.status);
-			useOCRAD();
-		}
-	}
-	else{
-		if(Date.parse(new Date()) - startRun > 15000){
-			// wait more than 15 seconds
-			console.log("xhr.readyState: "+xhr.readyState);
-			useOCRAD();
-		}
 	}
 }
 
@@ -390,7 +350,7 @@ function FilterResult(result)
     return newResult.toLowerCase();
 }
 
-function FilterResultIDOL(result){
+function FilterResultArray(result){
 	var regexp = /^[a-zA-Z0-9]+$/;
     var newResult;
 	if(!Array.isArray(result))
@@ -510,4 +470,32 @@ function getBaseImage(imgData) {
 	ctx.putImageData(imgData, 0, 0);
     
     return canvas.toDataURL("image/png");
+}
+
+function dataURItoBlob(dataURI) {
+    // convert base64/URLEncoded data component to raw binary data held in a string
+    var byteString;
+    if (dataURI.split(',')[0].indexOf('base64') >= 0) {
+        byteString = atob(dataURI.split(',')[1]);
+    } else {
+        byteString = unescape(dataURI.split(',')[1]);
+
+    }
+
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {
+        type: mimeString
+    });
+}
+
+function replaceAll(str, find, replace) {
+	return str.replace(new RegExp(find, 'g'), replace);
 }
