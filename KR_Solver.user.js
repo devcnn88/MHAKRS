@@ -11,6 +11,8 @@
 // @include		https://*.dropbox.com/*
 // @include		http://*.dropboxusercontent.com/*
 // @include		https://*.dropboxusercontent.com/*
+// @downloadURL	https://greasyfork.org/scripts/13809-mh-auto-kr-solver/code/MH%20Auto%20KR%20Solver.user.js
+// @updateURL	https://greasyfork.org/scripts/13809-mh-auto-kr-solver/code/MH%20Auto%20KR%20Solver.meta.js
 // ==/UserScript==
 
 function receiveMessage(event)
