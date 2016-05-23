@@ -236,7 +236,7 @@ function KingsRewardSolver()
 		contentType: false,
 		processData: false,
 		type: 'POST',
-		timeout: 5000,
+		timeout: 10000,
 		success: function (data) {
 			if(data.OCRExitCode == 1){
 				var resultList = [];
