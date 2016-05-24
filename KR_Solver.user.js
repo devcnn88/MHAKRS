@@ -270,6 +270,7 @@ function KingsRewardSolver()
 			}
 		},
 		error: function (data) {
+			data.date = (new Date()).toJSON();
 			console.debug(data);
 			returnResult("#" + JSON.stringify(data));
 			useOCRAD();
