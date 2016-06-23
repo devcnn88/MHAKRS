@@ -56,13 +56,9 @@ var dilateFinalImgData;
 var startRun = Date.parse(new Date());
 window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
 
-function run(){
-	KingsRewardSolver();
-}
-
 function KingsRewardSolver()
 {
-    var canvas = document.createElement('canvas');    
+	var canvas = document.createElement('canvas');    
     var img = document.getElementsByTagName('img')[0];    			
     canvas.width = img.width;
     canvas.height = img.height;
@@ -343,10 +339,10 @@ function useOCRAD(arrList){
 	objResult = countUnique(resultFinalList);
 	console.debug(JSON.stringify(objResult));
 	var index = maxIndex(objResult.count);
-	if(average(objResult.count) == objResult.value[index])
-		strSend = resultFinalList[resultFinalList.length-1] + "~" + krImgDataFull;
+	if(average(objResult.count) == objResult.count[index])
+		strSend = resultFinalList[resultFinalList.length-1].toUpperCase() + "~" + krImgDataFull;
 	else
-		strSend = objResult.value[index] + "~" + krImgDataFull;
+		strSend = objResult.value[index].toUpperCase() + "~" + krImgDataFull;
 	returnResult(strSend);
 }
 
