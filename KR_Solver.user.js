@@ -249,7 +249,7 @@ function KingsRewardSolver()
 				
 				objResult = countUnique(resultList);
 				index = maxIndex(objResult.count);
-				if(objResult.count[index] <= Math.floor(resultList.length/2))
+				if(objResult.count[index] <= Math.floor(resultList.length/2) || objResult.value[index].length != 5)
 					useOCRAD(resultList);
 				else{
 					console.debug(JSON.stringify(objResult));
