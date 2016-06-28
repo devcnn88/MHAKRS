@@ -337,7 +337,7 @@ function useOCRAD(arrList){
 		
 	objResult = {};
 	objResult = countUnique(resultFinalList);
-	console.debug(JSON.stringify(objResult));
+	returnResult('Log_' + JSON.stringify(objResult));
 	var index = maxIndex(objResult.count);
 	if(average(objResult.count) == objResult.count[index])
 		strSend = resultFinalList[resultFinalList.length-1].toUpperCase() + "~" + krImgDataFull;
@@ -352,8 +352,7 @@ function returnResult(strIn){
 		window.parent.postMessage(strIn, "https://www.mousehuntgame.com/");
 	}
 	catch (e) {
-		console.log("Error returnResult(): ");
-		console.debug(e);
+		console.error('returnResult:',e);
 	}
 }
 
