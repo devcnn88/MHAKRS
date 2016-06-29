@@ -252,7 +252,7 @@ function KingsRewardSolver()
 				if(objResult.count[index] <= Math.floor(resultList.length/2) || objResult.value[index].length != 5)
 					useOCRAD(resultList);
 				else{
-					console.debug(JSON.stringify(objResult));
+					returnResult('Log_' + JSON.stringify(objResult));
 					if(average(objResult.count) == objResult.value[index])
 						strSend = resultList[resultList.length-1] + "~" + krImgDataFull;
 					else
