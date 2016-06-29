@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        MH Auto KR Solver
 // @author      Kevin Kwok, CnN
-// @version    	1.1.0
+// @version    	1.1.1
 // @namespace   https://devcnn.wordpress.com/, https://antimatter15.com/
 // @description This is an auto MH KR Solver.
 // @require		https://code.jquery.com/jquery-2.2.2.min.js
