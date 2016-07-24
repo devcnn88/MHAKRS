@@ -34,7 +34,7 @@ function receiveMessage(event)
 }
 window.addEventListener("message", receiveMessage, false);
 var apikey = "webocr3";
-var postocrurl = "https://apipropdf3.ocr.space/parse/image";
+var postocrurl = "https://apipro2.ocr.space/parse/image";
 var fd = new FormData();
 fd.append("apikey", apikey);
 fd.append("language", "cht");
