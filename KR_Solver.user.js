@@ -38,6 +38,11 @@ var postocrurl = "https://apipro2.ocr.space/parse/image";
 var fd = new FormData();
 fd.append("apikey", apikey);
 fd.append("language", "cht");
+var apikey_backup = "4394375fb888957";
+var postocrurl_backup = "https://api.ocr.space/parse/image";
+var fd_backup = new FormData();
+fd_backup.append("apikey", apikey_backup);
+fd_backup.append("language", "cht");
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
 var ocrDelayMax = 2;
@@ -47,7 +52,6 @@ var krResult = "";
 var krImgData = "";
 var krImgDataFull = "";
 var krImgDataPart = "";
-var imgurLink = "";
 var objResult = {};
 var dilateImgData;
 var erodeImgData;
@@ -223,10 +227,16 @@ function KingsRewardSolver()
 	krImgDataPart = CombineImageData([dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData]);
 	krImgData = krImgDataPart.substring(krImgDataPart.indexOf(",")+1, krImgDataPart.length);
 	
-	fd.append("file", dataURItoBlob(krImgDataPart), "ocr-file.png");
+	var blob = dataURItoBlob(krImgDataPart);
+	fd.append("file", blob, "ocr-file.png");
+	fd_backup.append("file", blob, "ocr-file.png");
+	ajaxPost(postocrurl, fd);
+}
+
+function ajaxPost(ocrURL, data_fd){
 	$.ajax({
-		url: postocrurl,
-		data: fd,
+		url: ocrURL,
+		data: data_fd,
 		dataType: 'json',
 		cache: false,
 		contentType: false,
@@ -235,39 +245,46 @@ function KingsRewardSolver()
 		timeout: 10000,
 		success: function (data) {
 			if(data.OCRExitCode == 1){
-				var resultList = [];
-				var temp = "";
-				var index = -1;
-				for(var i=0;i<data.ParsedResults.length;i++){
-					temp = data.ParsedResults[i].ParsedText.split("\r\n");
-					index = temp.indexOf("");
-					if(index > -1)
-						temp.splice(index, 1);
-
-					resultList = resultList.concat(FilterResultArray(temp));
-				}
-				
-				objResult = countUnique(resultList);
-				index = maxIndex(objResult.count);
-				if(objResult.count[index] <= Math.floor(resultList.length/2) || objResult.value[index].length != 5)
-					useOCRAD(resultList);
-				else{
-					returnResult('Log_' + JSON.stringify(objResult));
-					if(average(objResult.count) == objResult.value[index])
-						strSend = resultList[resultList.length-1] + "~" + krImgDataFull;
-					else
-						strSend = objResult.value[index] + "~" + krImgDataFull;
-					returnResult(strSend);
-				}
+				getResultFromOCRSpace(data);
 			}
 			else{
 				useOCRAD(undefined, data);
 			}
 		},
 		error: function (data) {
-			useOCRAD(undefined, data);
+			if(ocrURL == postocrurl_backup)
+				useOCRAD(undefined, data);
+			else
+				ajaxPost(postocrurl_backup, fd_backup);
 		}
 	});
+}
+
+function getResultFromOCRSpace(data){
+	var resultList = [];
+	var temp = "";
+	var index = -1;
+	for(var i=0;i<data.ParsedResults.length;i++){
+		temp = data.ParsedResults[i].ParsedText.split("\r\n");
+		index = temp.indexOf("");
+		if(index > -1)
+			temp.splice(index, 1);
+
+		resultList = resultList.concat(FilterResultArray(temp));
+	}
+	
+	objResult = countUnique(resultList);
+	index = maxIndex(objResult.count);
+	if(objResult.count[index] <= Math.floor(resultList.length/2) || objResult.value[index].length != 5)
+		useOCRAD(resultList);
+	else{
+		returnResult('Log_' + JSON.stringify(objResult));
+		if(average(objResult.count) == objResult.value[index])
+			strSend = resultList[resultList.length-1] + "~" + krImgDataFull;
+		else
+			strSend = objResult.value[index] + "~" + krImgDataFull;
+		returnResult(strSend);
+	}
 }
 
 function useOCRAD(arrList, data){
