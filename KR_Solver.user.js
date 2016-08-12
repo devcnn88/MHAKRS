@@ -33,16 +33,11 @@ function receiveMessage(event)
 	}		
 }
 window.addEventListener("message", receiveMessage, false);
-var apikey = "webocr3";
-var postocrurl = "https://apipro2.ocr.space/parse/image";
-var fd = new FormData();
-fd.append("apikey", apikey);
-fd.append("language", "cht");
-var apikey_backup = "4394375fb888957";
-var postocrurl_backup = "https://api.ocr.space/parse/image";
-var fd_backup = new FormData();
-fd_backup.append("apikey", apikey_backup);
-fd_backup.append("language", "cht");
+var arrAPI = [];
+arrAPI.push({apikey:"copyfishonly", postocrurl:"https://apipro2.ocr.space/parse/image", language:"cht"});
+arrAPI.push({apikey:"webocr3", postocrurl:"https://api.ocr.space/parse/image", language:"cht"});
+arrAPI.push({apikey:"4394375fb888957", postocrurl:"https://api.ocr.space/parse/image", language:"cht"});
+var arrFD = new Array(arrAPI.length);
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
 var ocrDelayMax = 2;
@@ -228,9 +223,17 @@ function KingsRewardSolver()
 	krImgData = krImgDataPart.substring(krImgDataPart.indexOf(",")+1, krImgDataPart.length);
 	
 	var blob = dataURItoBlob(krImgDataPart);
-	fd.append("file", blob, "ocr-file.png");
-	fd_backup.append("file", blob, "ocr-file.png");
-	ajaxPost(postocrurl, fd);
+	for(var i=0;i<arrFD.length;i++){
+		arrFD[i] = new FormData();
+		arrFD[i].append('apikey', arrAPI[i].apikey);
+		arrFD[i].append('language', arrAPI[i].language);
+		arrFD[i].append("file", blob, "ocr-file-" + i + ".png");
+	}
+
+	if(arrAPI.length > 0 && arrFD.length > 0)
+		ajaxPost(arrAPI[0].postocrurl, arrFD[0]);
+	else
+		useOCRAD();
 }
 
 function ajaxPost(ocrURL, data_fd){
@@ -252,10 +255,12 @@ function ajaxPost(ocrURL, data_fd){
 			}
 		},
 		error: function (data) {
-			if(ocrURL == postocrurl_backup)
+			arrFD.splice(0,1);
+			arrAPI.splice(0,1);
+			if(arrFD.length <= 0)
 				useOCRAD(undefined, data);
 			else
-				ajaxPost(postocrurl_backup, fd_backup);
+				ajaxPost(arrAPI[0].postocrurl, arrFD[0]);
 		}
 	});
 }
