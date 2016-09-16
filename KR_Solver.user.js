@@ -172,7 +172,7 @@ function KingsRewardSolver()
 		    leftPixel = i - 4;
 		    rightPixel = i + 4;		
 		    isFirstCol = (leftPixel < 0);
-		    isLastCol = ((rightPixel % canvas.width) === 0);
+		    isLastCol = ((rightPixel % canvas.width*4) === 0);
 		    if (isFirstCol)
 			    erodeFinalImgData.data[i] &= erodeImgData.data[rightPixel];
 		    else if (isLastCol)
@@ -205,13 +205,13 @@ function KingsRewardSolver()
 		    leftPixel = i - 4;
 		    rightPixel = i + 4;		
 		    isFirstCol = (leftPixel < 0);
-		    isLastCol = ((rightPixel % canvas.width) === 0);
+		    isLastCol = ((rightPixel % canvas.width*4) === 0);
 		    if (isFirstCol)
-			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[leftPixel];
-		    else if (isLastCol)
 			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[rightPixel];
+		    else if (isLastCol)
+			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[leftPixel];
 		    else
-			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[rightPixel] | erodeFinalImgData.data[leftPixel];
+			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[leftPixel] | erodeFinalImgData.data[rightPixel];
 			
 		    dilateFinalImgData.data[i + 1] = dilateFinalImgData.data[i];
 		    dilateFinalImgData.data[i + 2] = dilateFinalImgData.data[i];		
