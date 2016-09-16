@@ -34,9 +34,9 @@ function receiveMessage(event)
 }
 window.addEventListener("message", receiveMessage, false);
 var arrAPI = [];
-arrAPI.push({apikey:"copyfishonly", postocrurl:"https://apipro2.ocr.space/parse/image", language:"cht"});
-arrAPI.push({apikey:"webocr3", postocrurl:"https://api.ocr.space/parse/image", language:"cht"});
-arrAPI.push({apikey:"4394375fb888957", postocrurl:"https://api.ocr.space/parse/image", language:"cht"});
+arrAPI.push({apikey:"copyfishonly", postocrurl:"https://apipro2.ocr.space/parse/image", language:"kor"});
+arrAPI.push({apikey:"webocr3", postocrurl:"https://api.ocr.space/parse/image", language:"kor"});
+arrAPI.push({apikey:"4394375fb888957", postocrurl:"https://api.ocr.space/parse/image", language:"kor"});
 var arrFD = new Array(arrAPI.length);
 var xhr = new XMLHttpRequest();
 var ocrDelayMin = 1;
@@ -102,7 +102,7 @@ function KingsRewardSolver()
 		    abovePixel = i - canvas.width * 4;
 		    belowPixel = i + canvas.width * 4;		
 		    isFirstRow = (abovePixel < 0);
-		    isLastRow = (belowPixel > thresholdImgData.data.length);		
+		    isLastRow = (belowPixel >= thresholdImgData.data.length);		
 		    if (isFirstRow)
 			    dilateImgData.data[i] |= thresholdImgData.data[belowPixel];
 		    else if (isLastRow)		    
@@ -135,7 +135,7 @@ function KingsRewardSolver()
 		    abovePixel = i - canvas.width * 4;
 		    belowPixel = i + canvas.width * 4;		
 		    isFirstRow = (abovePixel < 0);
-		    isLastRow = (belowPixel > dilateImgData.data.length);		
+		    isLastRow = (belowPixel >= dilateImgData.data.length);		
 		    if (isFirstRow)
 			    erodeImgData.data[i] &= dilateImgData.data[belowPixel];
 		    else if (isLastRow)
@@ -146,7 +146,7 @@ function KingsRewardSolver()
 		    erodeImgData.data[i + 1] = erodeImgData.data[i];
 		    erodeImgData.data[i + 2] = erodeImgData.data[i];		
 	    }
-    }    
+    }
 	
 	dilateFinalImgData = context.createImageData(canvas.width, canvas.height);
     erodeFinalImgData = context.createImageData(canvas.width, canvas.height);
@@ -172,7 +172,7 @@ function KingsRewardSolver()
 		    leftPixel = i - 4;
 		    rightPixel = i + 4;		
 		    isFirstCol = (leftPixel < 0);
-		    isLastCol = (rightPixel > erodeImgData.data.length);
+		    isLastCol = ((rightPixel % canvas.width) === 0);
 		    if (isFirstCol)
 			    erodeFinalImgData.data[i] &= erodeImgData.data[rightPixel];
 		    else if (isLastCol)
@@ -205,7 +205,7 @@ function KingsRewardSolver()
 		    leftPixel = i - 4;
 		    rightPixel = i + 4;		
 		    isFirstCol = (leftPixel < 0);
-		    isLastCol = (rightPixel > erodeFinalImgData.data.length);		
+		    isLastCol = ((rightPixel % canvas.width) === 0);
 		    if (isFirstCol)
 			    dilateFinalImgData.data[i] |= erodeFinalImgData.data[leftPixel];
 		    else if (isLastCol)
@@ -520,7 +520,6 @@ function dataURItoBlob(dataURI) {
         byteString = atob(dataURI.split(',')[1]);
     } else {
         byteString = unescape(dataURI.split(',')[1]);
-
     }
 
     // separate out the mime component
