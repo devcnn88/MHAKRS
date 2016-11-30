@@ -243,26 +243,41 @@ function ajaxPost(ocrURL, data_fd){
 function getResultFromOCRSpace(data){
 	var resultList = [];
 	var temp = "";
-	var index = -1;
+	var nIndex = -1;
 	for(var i=0;i<data.ParsedResults.length;i++){
 		temp = data.ParsedResults[i].ParsedText.split("\r\n");
-		index = temp.indexOf("");
-		if(index > -1)
-			temp.splice(index, 1);
+		nIndex = temp.indexOf("");
+		if(nIndex > -1)
+			temp.splice(nIndex, 1);
 
 		resultList = resultList.concat(FilterResultArray(temp));
 	}
 	
 	objResult = countUnique(resultList);
-	index = maxIndex(objResult.count);
-	if(objResult.count[index] <= Math.floor(resultList.length/2) || objResult.value[index].length != 5)
+	nIndex = maxIndex(objResult.count);
+	if(objResult.count[nIndex] <= Math.floor(resultList.length/2) || objResult.value[nIndex].length != 5)
 		useOCRAD(resultList);
 	else{
 		returnResult('Log_' + JSON.stringify(objResult));
-		if(average(objResult.count) == objResult.value[index])
-			g_strSend = resultList[resultList.length-1] + "~" + g_krImgDataFull;
+		var nCount = countArrayElement(objResult.count[nIndex], objResult.count);
+		if(nCount > 1){
+			var nMinDiffValue = Number.MAX_SAFE_INTEGER;
+			var nMinDiffIndex = -1;
+			for(var i=0;i<objResult.count.length;i++){
+				if(objResult.count[i] == objResult.count[nIndex]){
+					if(objResult.diffLength[i] < nMinDiffValue){
+						nMinDiffValue = objResult.diffLength[i];
+						nMinDiffIndex = i;
+					}
+				}
+			}
+			if(nMinDiffIndex > -1)
+				g_strSend = objResult.value[nMinDiffIndex].toUpperCase() + "~" + g_krImgDataFull;
+			else
+				g_strSend = resultList[resultList.length-1] + "~" + g_krImgDataFull;
+		}
 		else
-			g_strSend = objResult.value[index] + "~" + g_krImgDataFull;
+			g_strSend = objResult.value[nIndex] + "~" + g_krImgDataFull;
 		returnResult(g_strSend);
 	}
 }
@@ -328,11 +343,26 @@ function useOCRAD(arrList, data){
 	objResult = {};
 	objResult = countUnique(arrResult);
 	returnResult('Log_' + JSON.stringify(objResult));
-	var index = maxIndex(objResult.count);
-	if(average(objResult.count) == objResult.count[index])
-		g_strSend = arrResult[arrResult.length-1].toUpperCase() + "~" + g_krImgDataFull;
+	var nIndex = maxIndex(objResult.count);
+	var nCount = countArrayElement(objResult.count[nIndex], objResult.count);
+	if(nCount > 1){
+		var nMinDiffValue = Number.MAX_SAFE_INTEGER;
+		var nMinDiffIndex = -1;
+		for(var i=0;i<objResult.count.length;i++){
+			if(objResult.count[i] == objResult.count[nIndex]){
+				if(objResult.diffLength[i] < nMinDiffValue){
+					nMinDiffValue = objResult.diffLength[i];
+					nMinDiffIndex = i;
+				}
+			}
+		}
+		if(nMinDiffIndex > -1)
+			g_strSend = objResult.value[nMinDiffIndex].toUpperCase() + "~" + g_krImgDataFull;
+		else
+			g_strSend = arrResult[arrResult.length-1].toUpperCase() + "~" + g_krImgDataFull;
+	}
 	else
-		g_strSend = objResult.value[index].toUpperCase() + "~" + g_krImgDataFull;
+		g_strSend = objResult.value[nIndex].toUpperCase() + "~" + g_krImgDataFull;
 	returnResult(g_strSend);
 }
 
@@ -500,6 +530,7 @@ function countUnique(arrIn){
 	var  objCount = {
 		value : [],
 		count : [],
+		diffLength : []
 	}; 
 
 	arrIn.forEach(function(i) { 
@@ -507,6 +538,7 @@ function countUnique(arrIn){
 		if (index < 0){
 			objCount.value.push(i);
 			objCount.count.push(1);
+			objCount.diffLength.push(Math.abs(5-i.length));
 		}
 		else {
 			objCount.count[index]++;
@@ -526,6 +558,15 @@ function maxIndex(data){
 		}
 	}
 	return index;
+}
+
+function countArrayElement(value, arrIn){
+	var count = 0;
+	for (var i=0;i<arrIn.length;i++){
+		if (arrIn[i] == value)
+			count++;
+	}
+	return count;
 }
 
 function average(data){
