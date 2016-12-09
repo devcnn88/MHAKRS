@@ -357,12 +357,19 @@ function useOCRAD(arrList, data){
 			}
 		}
 		if(nMinDiffIndex > -1)
-			g_strSend = objResult.value[nMinDiffIndex].toUpperCase() + "~" + g_krImgDataFull;
+			g_strSend = objResult.value[nMinDiffIndex].toUpperCase();
 		else
-			g_strSend = arrResult[arrResult.length-1].toUpperCase() + "~" + g_krImgDataFull;
+			g_strSend = arrResult[arrResult.length-1].toUpperCase();
 	}
 	else
-		g_strSend = objResult.value[nIndex].toUpperCase() + "~" + g_krImgDataFull;
+		g_strSend = objResult.value[nIndex].toUpperCase();
+	if(g_strSend.indexOf('W') > -1){
+		if(g_strSend.length == 4)
+			g_strSend = g_strSend.replace(/W/,'VV');
+		else if(g_strSend.length < 4)
+			g_strSend = g_strSend.replace(/W/g,'VV');
+	}
+	g_strSend += "~" + g_krImgDataFull;
 	returnResult(g_strSend);
 }
 
