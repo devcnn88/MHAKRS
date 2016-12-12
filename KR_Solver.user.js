@@ -254,17 +254,17 @@ function getResultFromOCRSpace(data){
 	}
 	
 	objResult = countUnique(resultList);
-	nIndex = maxIndex(objResult.count);
+	var objCountMax = maxArrayObj(objResult.count);
+	nIndex = objCountMax.index;
 	if(objResult.count[nIndex] <= Math.floor(resultList.length/2) || objResult.value[nIndex].length != 5)
 		useOCRAD(resultList);
 	else{
 		returnResult('Log_' + JSON.stringify(objResult));
-		var nCount = countArrayElement(objResult.count[nIndex], objResult.count);
-		if(nCount > 1){
+		if(objCountMax.occurrence > 1){
 			var nMinDiffValue = Number.MAX_SAFE_INTEGER;
 			var nMinDiffIndex = -1;
 			for(var i=0;i<objResult.count.length;i++){
-				if(objResult.count[i] == objResult.count[nIndex]){
+				if(objResult.count[i] == objCountMax.value){
 					if(objResult.diffLength[i] < nMinDiffValue){
 						nMinDiffValue = objResult.diffLength[i];
 						nMinDiffIndex = i;
@@ -272,12 +272,9 @@ function getResultFromOCRSpace(data){
 				}
 			}
 			if(nMinDiffIndex > -1)
-				g_strSend = objResult.value[nMinDiffIndex].toUpperCase() + "~" + g_krImgDataFull;
-			else
-				g_strSend = resultList[resultList.length-1] + "~" + g_krImgDataFull;
+				nIndex = nMinDiffIndex;
 		}
-		else
-			g_strSend = objResult.value[nIndex] + "~" + g_krImgDataFull;
+		g_strSend = objResult.value[nIndex] + "~" + g_krImgDataFull;
 		returnResult(g_strSend);
 	}
 }
@@ -343,13 +340,14 @@ function useOCRAD(arrList, data){
 	objResult = {};
 	objResult = countUnique(arrResult);
 	returnResult('Log_' + JSON.stringify(objResult));
-	var nIndex = maxIndex(objResult.count);
-	var nCount = countArrayElement(objResult.count[nIndex], objResult.count);
-	if(nCount > 1){
+	
+	var objCountMax = maxArrayObj(objResult.count);
+	var nIndex = objCountMax.index;
+	if(objCountMax.occurrence > 1){
 		var nMinDiffValue = Number.MAX_SAFE_INTEGER;
 		var nMinDiffIndex = -1;
 		for(var i=0;i<objResult.count.length;i++){
-			if(objResult.count[i] == objResult.count[nIndex]){
+			if(objResult.count[i] == objCountMax.value){
 				if(objResult.diffLength[i] < nMinDiffValue){
 					nMinDiffValue = objResult.diffLength[i];
 					nMinDiffIndex = i;
@@ -357,12 +355,33 @@ function useOCRAD(arrList, data){
 			}
 		}
 		if(nMinDiffIndex > -1)
-			g_strSend = objResult.value[nMinDiffIndex].toUpperCase();
-		else
-			g_strSend = arrResult[arrResult.length-1].toUpperCase();
+			nIndex = nMinDiffIndex;
 	}
-	else
-		g_strSend = objResult.value[nIndex].toUpperCase();
+
+	if(objResult.value[nIndex].length != 5){
+		var objDiffLengthMin = minArrayObj(objResult.diffLength);
+		if(objDiffLengthMin.value === 0){
+			if(objDiffLengthMin.occurrence > 1){
+				var nMaxCountValue = Number.MIN_SAFE_INTEGER;
+				var nMaxCountIndex = -1;
+				for(var i=0;i<objResult.diffLength.length;i++){
+					if(objResult.diffLength[i] === 0){
+						if(objResult.count[i] > nMaxCountValue){
+							nMaxCountValue = objResult.count[i];
+							nMaxCountIndex = i;
+						}
+					}
+				}
+				if(nMaxCountIndex > -1)
+					nIndex = nMaxCountIndex;
+			}
+			else{
+				if(objDiffLengthMin.index > -1)
+					nIndex = objDiffLengthMin.index;
+			}
+		}
+	}
+	g_strSend = objResult.value[nIndex].toUpperCase();
 	if(g_strSend.indexOf('W') > -1){
 		if(g_strSend.length == 4)
 			g_strSend = g_strSend.replace(/W/,'VV');
@@ -555,16 +574,37 @@ function countUnique(arrIn){
 	return objCount;
 }
 
-function maxIndex(data){
-	var value = Number.MIN_SAFE_INTEGER;
-	var index = -1;
-	for (var i=0;i<data.length;i++){
-		if (data[i] > value){
-			value = data[i];
-			index = i;
+function maxArrayObj(arr){
+	var obj = {
+		value : Number.MIN_SAFE_INTEGER,
+		index : -1,
+		occurrence : 0
+	};
+	for (var i=0;i<arr.length;i++){
+		if (arr[i] > obj.value){
+			obj.value = arr[i];
+			obj.index = i;
 		}
 	}
-	return index;
+	obj.occurrence = countArrayElement(obj.value, arr);
+	return obj;
+}
+
+function minArrayObj(arr){
+	var obj = {
+		value : Number.MAX_SAFE_INTEGER,
+		index : -1,
+		occurrence : 0
+		
+	};
+	for (var i=0;i<arr.length;i++){
+		if (arr[i] < obj.value){
+			obj.value = arr[i];
+			obj.index = i;
+		}
+	}
+	obj.occurrence = countArrayElement(obj.value, arr);
+	return obj;
 }
 
 function countArrayElement(value, arrIn){
