@@ -11,6 +11,7 @@
 // @include		https://*.dropbox.com/*
 // @include		http://*.dropboxusercontent.com/*
 // @include		https://*.dropboxusercontent.com/*
+// @grant		GM_info
 // @downloadURL	https://greasyfork.org/scripts/13809-mh-auto-kr-solver/code/MH%20Auto%20KR%20Solver.user.js
 // @updateURL	https://greasyfork.org/scripts/13809-mh-auto-kr-solver/code/MH%20Auto%20KR%20Solver.meta.js
 // ==/UserScript==
@@ -28,6 +29,16 @@ function receiveMessage(event){
 		}
 	}		
 }
+
+var g_strVersion;
+try{
+	g_strVersion = chrome.runtime.getManifest().version;
+}
+catch (e){
+	// not chrome extension
+	g_strVersion = GM_info.script.version;
+}
+localStorage.setItem('MHAKRS', g_strVersion);
 window.addEventListener("message", receiveMessage, false);
 var arrAPI = [];
 arrAPI.push({apikey:"copyfishonly", postocrurl:"https://apipro2.ocr.space/parse/image", language:"cht"});
@@ -46,6 +57,7 @@ var erodeImgData;
 var erodeFinalImgData;	
 var dilateFinalImgData;
 var startRun = Date.parse(new Date());
+returnResult('MHAKRS_' + g_strVersion);
 window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
 
 function KingsRewardSolver(){
