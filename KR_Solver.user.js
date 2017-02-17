@@ -347,7 +347,7 @@ function useOCRAD(arrList, data){
 	
 	arrResult = FilterResultArray(arrResult);
 	if(Array.isArray(arrList))
-		arrResult = arrList.concat(arrList);
+		arrResult = arrResult.concat(arrList);
 		
 	objResult = {};
 	objResult = countUnique(arrResult);
@@ -424,7 +424,32 @@ function FilterResult(result){
     return newResult.toLowerCase();
 }
 
+function setCharAt(str,nIndex,chr) {
+    return (nIndex > str.length-1) ? str : str.substr(0,nIndex) + chr + str.substr(nIndex+1);
+}
+
+function replaceToTrueChar(result){
+	var newResult;
+	var nCode,nIndex;
+	var objChar = {
+		charCode : [215],
+		trueChar : ['X']
+	};
+	if(!Array.isArray(result))
+		result = [result];
+	for(var i=0;i<result.length;i++){
+		for(var j=0;j<result[i].length;j++){
+			nCode = result[i].charCodeAt(j);
+			nIndex = objChar.charCode.indexOf(nCode);
+			if(nIndex > -1){
+				result[i] = setCharAt(result[i],j,objChar.trueChar[nIndex]);
+			}
+		}
+	}
+}
+
 function FilterResultArray(result){
+	replaceToTrueChar(result);
 	var regexp = /^[a-zA-Z0-9]+$/;
     var newResult;
 	if(!Array.isArray(result))
