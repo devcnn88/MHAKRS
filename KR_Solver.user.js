@@ -56,6 +56,8 @@ var dilateImgData;
 var erodeImgData;
 var erodeFinalImgData;	
 var dilateFinalImgData;
+var g_arrImgLoaded = new Array(6).fill(false);
+var g_arrImage = new Array(6);
 var startRun = Date.parse(new Date());
 returnResult('MHAKRS_' + g_strVersion);
 window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
@@ -205,22 +207,42 @@ function KingsRewardSolver(){
 		    dilateFinalImgData.data[i + 2] = dilateFinalImgData.data[i];		
 	    }
     }
-	
-	g_arrImgData = [dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData];
-	g_krImgDataFull = CombineAllImageData(imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData);
-	
-	var blob = dataURItoBlob(CombineImageData(g_arrImgData));
-	for(i=0;i<arrFD.length;i++){
-		arrFD[i] = new FormData();
-		arrFD[i].append('apikey', arrAPI[i].apikey);
-		arrFD[i].append('language', arrAPI[i].language);
-		arrFD[i].append("file", blob, "ocr-file-" + i + ".png");
-	}
 
-	if(arrAPI.length > 0 && arrFD.length > 0)
-		ajaxPost(arrAPI[0].postocrurl, arrFD[0]);
-	else
-		useOCRAD();
+	g_arrImgData = [dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData];
+	var arr = [imgData, thresholdImgData, dilateImgData, erodeImgData, erodeFinalImgData, dilateFinalImgData];
+	for(i=0;i<arr.length;i++){
+		g_arrImage[i] = new Image();
+		g_arrImage[i].onload = imgLoadedCallback(i);
+		g_arrImage[i].src = getBaseImage(arr[i]);
+	}
+	var interval = setInterval(
+        function () {
+			for(i=0;i<g_arrImgLoaded.length;i++){
+				if(g_arrImgLoaded[i] === false)
+					break;
+			}
+			if(i == g_arrImgLoaded.length){ // all loaded
+				g_krImgDataFull = CombineAllImageData(g_arrImage);
+				var blob = dataURItoBlob(CombineImageData(g_arrImage.slice(2)));
+				for(i=0;i<arrFD.length;i++){
+					arrFD[i] = new FormData();
+					arrFD[i].append('apikey', arrAPI[i].apikey);
+					arrFD[i].append('language', arrAPI[i].language);
+					arrFD[i].append("file", blob, "ocr-file-" + i + ".png");
+				}
+
+				if(arrAPI.length > 0 && arrFD.length > 0)
+					ajaxPost(arrAPI[0].postocrurl, arrFD[0]);
+				else
+					useOCRAD();
+				clearInterval(interval);
+                interval = null;
+			}
+        }, 1000);
+}
+
+function imgLoadedCallback(nIndex){
+	g_arrImgLoaded[nIndex] = true;
 }
 
 function ajaxPost(ocrURL, data_fd){
@@ -496,58 +518,44 @@ function CheckResult(resultList){
 		return resultList[maxIndex];
 }
 
-function CombineAllImageData(ori, threshold, dilate, erode, erodeFinal, dilateFinal){
-	var canvasAll = document.createElement('canvas');	
-	canvasAll.width = ori.width * 2;
-	canvasAll.height = ori.height * 3;
+function CombineAllImageData(arrImg){
+	var canvasAll = document.createElement('canvas');
 	var contextAll = canvasAll.getContext('2d');
-	var imgOri = new Image();
-	imgOri.src = getBaseImage(ori);
-	var imgThres = new Image();
-	imgThres.src = getBaseImage(threshold);
-	var imgDilate = new Image();
-	imgDilate.src = getBaseImage(dilate);
-	var imgErode = new Image();
-	imgErode.src = getBaseImage(erode);
-	var imgErodeFinal = new Image();
-	imgErodeFinal.src = getBaseImage(erodeFinal);
-	var imgDilateFinal = new Image();
-	imgDilateFinal.src = getBaseImage(dilateFinal);
-	contextAll.drawImage(imgOri, 0, 0);
-	contextAll.drawImage(imgThres, ori.width, 0);
-	contextAll.drawImage(imgDilate, 0, ori.height);
-	contextAll.drawImage(imgErode, ori.width, ori.height);	
-	contextAll.drawImage(imgErodeFinal, 0, ori.height * 2);
-	contextAll.drawImage(imgDilateFinal, ori.width, ori.height * 2);
-	return canvasAll.toDataURL('image/png');	
+	canvasAll.width = arrImg[0].width * 2;
+	canvasAll.height = arrImg[0].height * 3;
+	var x, y;
+	for(var row=0;row<3;row++){
+		for(var col=0;col<2;col++){
+			x = col*arrImg[0].width;
+			y = row*arrImg[0].height;
+			contextAll.drawImage(arrImg[row*2+col], x, y);
+		}
+	}
+	return canvasAll.toDataURL('image/png');
 }
 
-function CombineImageData(data){
-	if(data.length < 1)
+function CombineImageData(arrImg){
+	if(arrImg.length < 1)
 		return "";
 	
 	var i;
 	var canvasAll = document.createElement('canvas');
 	var maxWidth = 0;
 	var maxHeight = 0;
-	for(i=0;i<data.length;i++){
-		if(data[i].width > maxWidth)
-			maxWidth = data[i].width;
-		if(data[i].height > maxHeight)
-			maxHeight = data[i].height;
+	for(i=0;i<arrImg.length;i++){
+		if(arrImg[i].width > maxWidth)
+			maxWidth = arrImg[i].width;
+		if(arrImg[i].height > maxHeight)
+			maxHeight = arrImg[i].height;
 	}
 	
 	canvasAll.width = maxWidth;
-	canvasAll.height = maxHeight * data.length;
+	canvasAll.height = maxHeight * arrImg.length;
 	var contextAll = canvasAll.getContext('2d');
-	var img;
-	for(i=0;i<data.length;i++){
-		img = new Image();
-		img.src = getBaseImage(data[i]);
-		contextAll.drawImage(img, 0, i*maxHeight);
+	for(i=0;i<arrImg.length;i++){
+		contextAll.drawImage(arrImg[i], 0, i*maxHeight);
 	}
-	
-	return canvasAll.toDataURL('image/png');	
+	return canvasAll.toDataURL('image/png');
 }
 
 function getBaseImage(imgData) {
