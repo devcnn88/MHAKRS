@@ -38,7 +38,10 @@ catch (e){
 	// not chrome extension
 	g_strVersion = GM_info.script.version;
 }
-localStorage.setItem('MHAKRS', g_strVersion);
+var nowDate = new Date();
+var nTimezoneOffset = -(nowDate.getTimezoneOffset()) * 60000;
+nowDate = new Date(Date.parse(nowDate)+nTimezoneOffset);
+localStorage.setItem('MHAKRS', g_strVersion + " " + nowDate.toISOString());
 window.addEventListener("message", receiveMessage, false);
 var arrAPI = [];
 arrAPI.push({apikey:"copyfishonly", postocrurl:"https://apipro2.ocr.space/parse/image", language:"cht"});
@@ -58,8 +61,7 @@ var erodeFinalImgData;
 var dilateFinalImgData;
 var g_arrImgLoaded = new Array(6).fill(false);
 var g_arrImage = new Array(6);
-var startRun = Date.parse(new Date());
-returnResult('MHAKRS_' + g_strVersion);
+returnResult('MHAKRS_' + g_strVersion + " " + nowDate.toISOString());
 window.setTimeout(function () { KingsRewardSolver(); }, ocrDelay * 1000);
 
 function KingsRewardSolver(){
